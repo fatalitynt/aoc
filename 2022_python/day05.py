@@ -54,4 +54,5 @@ What I learned?
 - [] can be used as stack with .append() and .pop()
 - last element is arr[-1]
 - arr.extend() works as addRange()
+- for i in range(start, exclusiveMax, delta) - c++ style for loop 
 '''

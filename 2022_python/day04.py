@@ -33,5 +33,5 @@ if __name__ == '__main__':
 
 '''
 What I learned?
-- nothing new
+- nothing
 '''
