@@ -1,3 +1,3 @@
 ﻿using Aoc_2023_csharp;
 
-Console.WriteLine(Day4.SolvePart2());
+Console.WriteLine(new Day5().SolvePart2());
