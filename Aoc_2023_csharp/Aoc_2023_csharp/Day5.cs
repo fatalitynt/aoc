@@ -6,36 +6,28 @@ public class Day5
 
     private string[] GetInput() => 5.DayInput().Concat(Arr("")).ToArray();
 
-    record Store(long[] Seeds, long[][] Data, int[][] Offsets);
+    record Range(long Start, long End, long Offset);
 
-    private long? TryConvertId(long[] section, long id) =>
-        id >= section[1] && id < section[1] + section[2]
-            ? section[0] - section[1] + id
-            : null;
+    private Range GetRange(long[] a) => new(a[1], a[1] + a[2] - 1, a[0] - a[1]);
 
-    // SLOW
-    private long ConvertId(long[][] sections, int[] offs, long id) => Enumerable
-        .Range(offs[0], offs[1])
-        .Select(i => TryConvertId(sections[i], id))
-        .FirstOrDefault(x => x.HasValue) ?? id;
+    private long[] LineToLongs(string s) => s
+        .Split(" ", StringSplitOptions.RemoveEmptyEntries)
+        .Select(long.Parse)
+        .ToArray();
 
-    // FASTER by x8-x10
-    private long ConvertIdOptimized(long[][] sections, int[] offs, long id)
-    {
-        var off = offs[0];
-        var cnt = offs[1];
-        for (var i = 0; i < cnt; i++)
-        {
-            var section = sections[i + off];
-            if (id >= section[1] && id < section[1] + section[2])
-                return section[0] - section[1] + id;
-        }
-        return id;
-    }
+    private Range[] GetRangesForSection(string[] a, int i) => a
+        .Select((line, idx) => (line, idx))
+        .SkipWhile(x => x.idx <= i)
+        .TakeWhile(x => !string.IsNullOrWhiteSpace(x.line))
+        .Select(x => GetRange(LineToLongs(x.line)))
+        .OrderBy(x => x.Start)
+        .ToArray();
 
-    private long GetLocation(long id, Store s) => s
-        .Offsets
-        .Aggregate(id, (curId, offs) => ConvertIdOptimized(s.Data, offs, curId));
+    private Range[][] GetRanges(string[] a) => a
+        .Select((line, idx) => (line, idx))
+        .Where(x => x.line.Contains("map:"))
+        .Select(x => GetRangesForSection(a, x.idx))
+        .ToArray();
 
     private long[] GetSeeds(string[] a) => a[0]
         .Split(": ")[1]
@@ -43,48 +35,68 @@ public class Day5
         .Select(long.Parse)
         .ToArray();
 
-    private long[][] GetData(string[] a) => a
-        .Where(x => x.Length > 0 && char.IsDigit(x[0]))
-        .Select(x => x.Split(" ").Select(long.Parse).ToArray())
-        .ToArray();
 
-    private int GetMapSize(string[] a, string mapName) => a
-        .SkipWhile(x => x != mapName)
-        .TakeWhile(x => !string.IsNullOrWhiteSpace(x))
-        .Count() - 1;
+    private Range Intersect(Range r0, Range r1) => new(
+        Math.Max(r0.Start, r1.Start) + r1.Offset,
+        Math.Min(r0.End, r1.End) + r1.Offset,
+        0);
 
-    private int GetLastOffset(int[][] a) => a.Length == 0 ? 0 : a.Last().Sum();
+    private Range GetLeftPart(Range r0, Range r1) => new(r0.Start, r1.Start - 1, 0);
+    private Range GetRightPart(Range r0, Range r1) => new(r1.End + 1, r0.End, 0);
 
-    private int[][] AppendArray(int[][] a, int nextSize) => a
-        .Concat(Arr<int[]>(Arr(GetLastOffset(a), nextSize)))
-        .ToArray();
+    private Range[] ExpandRangesInLayer(Range[] layer, Range r0)
+    {
+        var list = new List<Range>();
+        var last = r0;
+        foreach (var cur in layer)
+        {
+            if (last.Start > cur.End) continue;
+            if (last.End < cur.Start) break;
 
-    private int[][] GetOffsets(string[] a) => a
-        .Where(x => x.Contains("map:"))
-        .Select(x => GetMapSize(a, x))
-        .Aggregate(Array.Empty<int[]>(), AppendArray);
+            if (last.Start < cur.Start)
+                list.Add(GetLeftPart(last, cur));
 
-    private Store BuildStore(string[] a) => new(GetSeeds(a), GetData(a), GetOffsets(a));
+            list.Add(Intersect(last, cur));
 
-    private long GetMinForRange(long st, long cnt, Store s) => Enumerable
-        .Range(0, (int)cnt)
-        .Select(x => st + x)
-        .AsParallel()
-        .Select(id => GetLocation(id, s))
-        .Min();
+            last = last.End <= cur.End
+                ? null
+                : GetRightPart(last, cur);
 
-    private long SolvePart1(Store s) => s
-        .Seeds
-        .Select(x => GetLocation(x, s))
-        .Min();
+            if (last == null) break;
+        }
+        if (last != null)
+            list.Add(last);
+        return list.ToArray();
+    }
 
-    public long SolvePart1() => SolvePart1(BuildStore(GetInput()));
+    private Range[] ExpandRanges(Range[][] layers, Range r0) => layers
+        .Aggregate(Arr(r0),
+            (ranges, layer) => ranges
+                .SelectMany(r => ExpandRangesInLayer(layer, r)).ToArray());
 
-    private long SolvePart2(Store s) => Enumerable
-        .Range(0, s.Seeds.Length / 2)
-        .AsParallel()
-        .Select(i => GetMinForRange(s.Seeds[i * 2], s.Seeds[i * 2 + 1], s))
-        .Min();
+    public long SolvePart1()
+    {
+        var i = GetInput();
+        var layers = GetRanges(i);
+        var s = GetSeeds(i);
+        return s.SelectMany(x => ExpandRanges(layers, new Range(x, x, 0)))
+            .OrderBy(x => x.Start)
+            .First()
+            .Start;
+    }
 
-    public long SolvePart2() => SolvePart2(BuildStore(GetInput()));
+    private Range Rng(long start, long len) => new(start, start + len - 1, 0);
+
+    public long SolvePart2()
+    {
+        var i = GetInput();
+        var layers = GetRanges(i);
+        var s = GetSeeds(i);
+        return Enumerable
+            .Range(0, s.Length / 2)
+            .SelectMany(x => ExpandRanges(layers, Rng(s[x * 2], s[x * 2 + 1])))
+            .OrderBy(x => x.Start)
+            .First()
+            .Start;
+    }
 }
