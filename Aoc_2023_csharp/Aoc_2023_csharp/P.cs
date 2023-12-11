@@ -64,6 +64,8 @@ public class P
             yield return C(x, y);
     }
 
+    public long Dist(P oth) => Math.Abs((long)X - oth.X) + Math.Abs((long)Y - oth.Y);
+
     public static bool operator ==(P a, P b) => Equals(a, b);
     public static bool operator !=(P a, P b) => !(a == b);
 }
