@@ -6,4 +6,10 @@ public static class Helpers
 
     public static long[] ToLongArr(this string line) => line
         .Split(" ", StringSplitOptions.RemoveEmptyEntries).Select(long.Parse).ToArray();
+
+    public static int[] ToIntArr(this string line) => line
+        .Split(" ", StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
+
+    public static T[] MakeArr<T>(this int h, Func<T> f) => Enumerable
+        .Range(0, h).Select(_ => f()).ToArray();
 }

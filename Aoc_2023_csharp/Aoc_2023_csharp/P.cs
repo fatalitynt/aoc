@@ -21,7 +21,7 @@ public class P
 
     public override int GetHashCode() => HashCode.Combine(X, Y);
 
-    public override string ToString() => $"({X}:{Y})";
+    public override string ToString() => $"(y={Y} x={X})";
 
     public static P C(int x, int y) => new(x, y);
 
