@@ -1,4 +1,4 @@
-﻿namespace Aoc_2021_scharp;
+﻿namespace Aoc_2021_csharp;
 
 public class Day1
 {
