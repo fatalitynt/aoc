@@ -25,6 +25,14 @@ public class P
 
     public static P C(int x, int y) => new(x, y);
 
+    public IEnumerable<P> GetValidNeighbors<T>(T[][] a)
+    {
+        if (Y > 0) yield return Up;
+        if (Y + 1 < a.Length) yield return Down;
+        if (X > 0) yield return Left;
+        if (X + 1 < a[0].Length) yield return Right;
+    }
+
     public IEnumerable<P> GetNeighbors()
     {
         yield return Up;
