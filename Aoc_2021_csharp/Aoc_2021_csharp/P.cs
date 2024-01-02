@@ -25,7 +25,7 @@ public class P
 
     public static P C(int x, int y) => new(x, y);
 
-    public IEnumerable<P> GetValidNeighbors<T>(T[][] a)
+    public IEnumerable<P> Get4ValidNeighbors<T>(T[][] a)
     {
         if (Y > 0) yield return Up;
         if (Y + 1 < a.Length) yield return Down;
@@ -33,7 +33,21 @@ public class P
         if (X + 1 < a[0].Length) yield return Right;
     }
 
-    public IEnumerable<P> GetNeighbors()
+    public IEnumerable<P> Get8ValidNeighbors<T>(T[][] a)
+    {
+        if (Y > 0) yield return Up;
+        if (Y > 0 && X + 1 < a[0].Length) yield return Up.Right;
+        if (Y > 0 && X > 0) yield return Up.Left;
+
+        if (Y + 1 < a.Length) yield return Down;
+        if (Y + 1 < a.Length && X + 1 < a[0].Length) yield return Down.Right;
+        if (Y + 1 < a.Length && X > 0) yield return Down.Left;
+
+        if (X + 1 < a[0].Length) yield return Right;
+        if (X > 0) yield return Left;
+    }
+
+    public IEnumerable<P> Get4Neighbors()
     {
         yield return Up;
         yield return Down;
@@ -55,6 +69,12 @@ public class P
     public void Write<T>(T[][] a, T val)
     {
         if (IsInside(a)) a[Y][X] = val;
+        else throw new Exception($"Point {this} is outside of 2d array");
+    }
+
+    public void Update<T>(T[][] a, Func<T, T> update)
+    {
+        if (IsInside(a)) a[Y][X] = update(a[Y][X]);
         else throw new Exception($"Point {this} is outside of 2d array");
     }
 
