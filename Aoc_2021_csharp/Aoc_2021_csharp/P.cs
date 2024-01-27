@@ -2,8 +2,8 @@
 
 public class P
 {
-    public readonly int X;
-    public readonly int Y;
+    public int X;
+    public int Y;
     public P Up => C(X, Y - 1);
     public P Down => C(X, Y + 1);
     public P Left => C(X - 1, Y);
